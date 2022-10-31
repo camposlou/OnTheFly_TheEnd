@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using APIAircraft.Services;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -24,17 +25,34 @@ namespace APIAircraft.Controllers
 
         #region Read All AirCraft - OK
         [HttpGet]
-        public ActionResult<List<Aircraft>> GetAllAircraft() => _aircraftService.GetAllAircraft();
+        public ActionResult<List<Aircraft>> GetAllAircraft()
+        {
+            var aircraft = _aircraftService.GetAllAircraft();
+            if (aircraft == null) return BadRequest("Não foi encontrado nenhuma aeronave cadastrada!");
+            return Ok(aircraft);
+        }
         #endregion
 
         #region Read AirCraft One From RAB - OK
         [HttpGet("{rab:length(6)}", Name = "GetAirCraft")]
         public ActionResult<Aircraft> GetByAircraft(string rab)
         {
-            var aircraft = _aircraftService.GetByAircraft(rab);
 
+            if (rab == null) return NotFound("RAB não foi encontrado!\nTente novamente!");
+            else if (rab.Length == 5 || rab.Length == 6)
+            {
+                rab = rab.ToLower().Trim();
+                rab = rab.Replace("-", "");
+                rab = rab.Substring(0, 2) + "-" + rab.Substring(2, 3);
+            }
+            else
+            {
+                return NotFound("RAB inválido!\nTente novamente!");
+            }
+
+            var aircraft = _aircraftService.GetByAircraft(rab);
             if (aircraft == null)
-                return NotFound();
+                return NotFound("Esse RAB não foi encontrado!\nInforme um RAB válido.");
 
             return Ok(aircraft);
         }
@@ -44,32 +62,51 @@ namespace APIAircraft.Controllers
         [HttpPost]
         public ActionResult<Aircraft> CreateAircraft(Aircraft aircraft, string cnpj)
         {
-            //var company = _aircraftService.GetApiCompany(cnpj);
-            //if (company == null)
-            //    return NotFound("Companhia não cadastrada!");
-            //else
-            //{
+            var company = _aircraftService.GetApiCompany(cnpj);
+            if (company == null)
+                return NotFound("Companhia não cadastrada!");
+
             aircraft.RAB = aircraft.RAB.Trim().ToLower();
             var rab = aircraft.RAB;
-            aircraft.RAB = rab.Substring(0, 2) + "-" + rab.Substring(2, 3);
 
-            aircraft.DtRegistry = System.DateTime.Now;
+            if (rab.Length < 5)
+                return BadRequest("RAB inválido!\nTente novamente!");
+
+            aircraft.RAB = rab.Substring(0, 2) + "-" + rab.Substring(2, 3);
+            aircraft.DtRegistry = DateTime.Now;
+            aircraft.DtLastFlight = DateTime.Now;
+
+            var capacity = aircraft.Capacity;
+            if (capacity == 0)
+                return BadRequest("Aeronave precisa ter um número de assentos superior a 0.");
+
+            var dtLastFlight = aircraft.DtLastFlight;
+            var dtRegistry = aircraft.DtRegistry;
+
+            if (dtLastFlight < dtRegistry)
+                return BadRequest("A data do último voo não pode ser menor que a data do registro da aeronave!");
+            if (dtLastFlight > DateTime.Now)
+                return BadRequest("A data do último voo não pode ser uma data futura!");
 
             _aircraftService.CreateAircraft(aircraft);
             return CreatedAtRoute("GetAirCraft", new { rab = aircraft.RAB.ToString() }, aircraft);
-            //}
-
-            //Company company = _companyService.Get(cnpj);
-            //aircraft.CNPJ = _companyService.Get(cnpj).CNPJ;
-            //AirCraft airCraft = new AirCraft() { DtRegistry = System.DateTime.Now };
-
         }
         #endregion
 
         #region AirCraft Update - OK
         [HttpPut("{rab:length(6)},{newCapacity}")]
-        public ActionResult<Aircraft> UpdateAircraft(string rab, Aircraft aircraftIn, int newCapacity)
+        public ActionResult<Aircraft> UpdateAircraft(string rab, Aircraft aircraftIn, int newCapacity, string cnpj)
         {
+            //Aircraft aircrafIn = new Aircraft()
+            //{
+            //    RAB = rab,
+            //    DtRegistry = System.DateTime.Now,
+            //    DtLastFlight = dtlastFlight,
+            //};
+
+            //Company company = _aircraftService.GetApiCompany(cnpj);
+
+            //aircraftIn.Company = company;
             var aircraft = _aircraftService.GetByAircraft(rab);
 
             if (aircraft == null)
@@ -112,5 +149,7 @@ namespace APIAircraft.Controllers
             return NoContent();
         }
         #endregion
+
+
     }
 }

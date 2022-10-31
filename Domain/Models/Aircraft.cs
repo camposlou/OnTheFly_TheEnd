@@ -17,11 +17,10 @@ namespace Domain.Models
         public int Capacity { get; set; }
 
         [Required(ErrorMessage = "Formato de data inválido!")]
-        [DisplayFormat(DataFormatString = "dd/mm/yyyy")]
+        [DataType(DataType.Date)]
         public DateTime DtRegistry { get; set; }
 
-        [Required(ErrorMessage = "Formato de data inválido!")]
-        [DisplayFormat(DataFormatString = "dd/mm/yyyy")]
+        [DataType(DataType.Date)]
         public DateTime? DtLastFlight { get; set; }
 
         //  [Required(ErrorMessage = "Este campo é obrigatório!"), StringLength(19, ErrorMessage = "CNPJ inválido!")]
@@ -29,11 +28,7 @@ namespace Domain.Models
         //public string CNPJ { get; set; }
         #endregion
 
-        #region Method
-        //public AirCraft()
-        //{
-        //    DtRegistry = DateTime.Now;
-        //}
-        #endregion
+
     }
 }
+

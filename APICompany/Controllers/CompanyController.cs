@@ -118,9 +118,9 @@ namespace APICompany.Controllers
         public ActionResult<Company> Put(Company company_, string cnpj)
         {
 
-
+            company_.Cnpj = FormatCnpj(company_.Cnpj);
+            cnpj = FormatCnpj(cnpj);
             var company = _companyService.Get(cnpj);
-            company.Cnpj = FormatCnpj(cnpj);
 
             if (company == null)
             {
