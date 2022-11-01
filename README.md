@@ -29,7 +29,7 @@ Cadastros dos voos e passagens disponibilizados pelas companhias aéreas atendid
 - Vendas:
 Após o cadastro de voos, as passagens ficam disponíveis para serem vendidas de acordo com o máximo de assentos definida pela capacidade do avião. A venda não poderá constar o mesmo CPF na lista de passageiros. Cadastro das passagens reservadas ou vendidas de cada voo disponível. Nenhum passageiro na lista de vendas de passagem pode constar na lista de restritos. Caso aconteça a venda não poderá ser registrada.
 <h4> Tecnologias Utilizadas no projeto:  💻  </h4>
-- ASP.NET Core 5; <br>
+- API Web do ASP.Net Core 5; <br>
 - MongoDb;
 <h4>Modelos utilizados:  🏛  </h4>
 - MVC;<br>
