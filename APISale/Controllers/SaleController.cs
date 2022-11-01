@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System;
 using APISale.Services;
+using System.Threading.Tasks;
 
 namespace APISale.Controllers
 {
@@ -36,7 +37,7 @@ namespace APISale.Controllers
             return Ok(sale);
         }
         [HttpPost]
-        public ActionResult<Sale> Post(string cpfs, DateTime dateflight, bool sold, bool reserverd)
+        public async Task<ActionResult<Sale>> PostAsync(string cpfs, DateTime dateflight, bool sold, bool reserverd, string rab)
         {
             string[] listcpf = cpfs.Split(',');
             var passagensAtribute = new List<Passenger>();
@@ -44,7 +45,7 @@ namespace APISale.Controllers
             {
                 string cpfperson = listcpf[i];
                 cpfperson = cpfperson.Substring(0, 3) + "." + cpfperson.Substring(3, 3) + "." + cpfperson.Substring(6, 3) + "-" + cpfperson.Substring(9, 2);
-                var passenger = _saleService.GetPassenger(cpfperson);
+                Passenger passenger = await _saleService.GetPassenger(listcpf[i]);
                 if (passenger == null)
                 {
                     return BadRequest($"Não encotramos esse Cpf{listcpf[i]} em nossos Cadastros de Passageiro!");
@@ -57,7 +58,7 @@ namespace APISale.Controllers
                     passagensAtribute.Add(passenger);
                 }
             }
-            var flight = _saleService.GetFlight(dateflight); //falar com louise, fazer metodo de achar voo por data, iata, horas e minutos
+            var flight = await _saleService.GetFlight(dateflight, rab);
             if (flight == null)
             {
                 return BadRequest("Voo não localizado!");
@@ -66,12 +67,12 @@ namespace APISale.Controllers
             {
                 if (sold == false && reserverd == true)
                 {
-                    if ((flight.Sale - listcpf.Length) < 0)
+                    if ((flight.Sale + listcpf.Length) > flight.Plane.Capacity)
                     {
-                        return BadRequest("Quantidades de vendas de voo excedida, venda não pode ser realizada");
+                        return BadRequest("Quantidade de vendas excedidas!");
                     }
-                    flight.Sale = flight.Sale - listcpf.Length;
-                    _ = _saleService.PutFlight(flight.Departure, flight.Status, flight);
+                    flight.Sale = flight.Sale + listcpf.Length;
+                    _ = _saleService.PutFlight(flight.Id, flight.Sale);
                     Sale sales = new() { Passenger = passagensAtribute };
                     sales.Flight = flight;
                     sales.Reserved = true;
@@ -80,12 +81,12 @@ namespace APISale.Controllers
                 }
                 else if (sold == true && reserverd == false)
                 {
-                    if ((flight.Sale - listcpf.Length) < 0)
+                    if ((flight.Sale + listcpf.Length) > flight.Plane.Capacity)
                     {
-                        return BadRequest("Quantidades de vendas de voo excedida, venda não pode ser realizada");
+                        return BadRequest("Quantidade de vendas excedidas!");
                     }
-                    flight.Sale = flight.Sale - listcpf.Length;
-                    _ = _saleService.PutFlight(flight.Departure, flight.Status, flight);
+                    flight.Sale = flight.Sale + listcpf.Length;
+                    _ = _saleService.PutFlight(flight.Id, flight.Sale);
                     Sale sales = new() { Passenger = passagensAtribute };
                     sales.Flight = flight;
                     sales.Reserved = false;
@@ -110,3 +111,4 @@ namespace APISale.Controllers
         }
     }
 }
+

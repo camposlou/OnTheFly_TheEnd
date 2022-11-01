@@ -1,11 +1,17 @@
-﻿using System.Collections.Generic;
+﻿using MongoDB.Bson.Serialization.Attributes;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace Domain.Models
 {
+    [BsonIgnoreExtraElements]
     public class Sale
     {
+        [BsonId]
+        [BsonRepresentation(MongoDB.Bson.BsonType.ObjectId)]
+        [JsonPropertyName("Id")]
+        public string Id { get; set; }
         [Required(ErrorMessage = "Flight é um campo obrigatório")]
         [JsonPropertyName("Flight")]
         public Flight Flight { get; set; }

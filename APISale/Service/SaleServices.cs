@@ -29,29 +29,39 @@ namespace APISale.Services
         }
         public List<Sale> GetAll() => _sale.Find<Sale>(sale => true).ToList();
         public Sale GetSale(string cpf) => _sale.Find<Sale>(sales => sales.Passenger.Any(passager => passager.CPF == cpf)).FirstOrDefault();
-        // public void Remove(Sale saleInserted) => _sale.DeleteOne(sale => sale == saleInserted);
         public void Put(string Cpf, Sale saleIn)
         {
             _sale.ReplaceOne(sale => sale.Passenger.Any(passager => passager.CPF == Cpf), saleIn);
             GetSale(Cpf);
         }
-        public Passenger GetPassenger(string cpf)
+        //public Passenger GetPassenger(string cpf)
+        //{
+        //    HttpWebRequest request = (HttpWebRequest)WebRequest.Create($"https://localhost:44369/api/Passenger/CPF/{cpf}"); //url
+        //    request.AllowAutoRedirect = false;
+        //    HttpWebResponse verificaServidor = (HttpWebResponse)request.GetResponse();
+        //    Stream stream = verificaServidor.GetResponseStream();
+        //    if (stream == null) return null;
+        //    StreamReader answerReader = new StreamReader(stream);
+        //    string message = answerReader.ReadToEnd();
+        //    return new JavaScriptSerializer().Deserialize<Passenger>(message);
+        //}
+        public async Task<Passenger> GetPassenger(string cpf)
         {
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create("https://localhost:44369/api/Passenger/CPF/" + cpf); //url
-            request.AllowAutoRedirect = false;
-            HttpWebResponse verificaServidor = (HttpWebResponse)request.GetResponse();
-            Stream stream = verificaServidor.GetResponseStream();
-            if (stream == null) return null;
-            StreamReader answerReader = new StreamReader(stream);
-            string message = answerReader.ReadToEnd();
-            return new JavaScriptSerializer().Deserialize<Passenger>(message);
+            var httpclient = new HttpClient();
+            var saleresponse = await httpclient.GetAsync($"https://localhost:44369/api/Passenger/CPF/{cpf}");
+            var JsonString = await saleresponse.Content.ReadAsStringAsync();
+            //JavaScriptSerializer ser = new JavaScriptSerializer();
+            var sale = JsonSerializer.Deserialize<Passenger>(JsonString);
+
+            return sale;
+
         }
-        public async Task<Restricted> GetRestrictedPassenger(string cpf) //verificar passageiros restritos 
+        public async Task<Restricted> GetRestrictedPassenger(string cpf) //verificar passageiros restritos
         {
             Restricted restricted;
             using (HttpClient _restrictedClient = new HttpClient())
             {
-                HttpResponseMessage response = await _restrictedClient.GetAsync("link do get passenger restritos for cpf/" + cpf + "/json/");
+                HttpResponseMessage response = await _restrictedClient.GetAsync($"https://localhost:44369/api/Restricted/CPF/{cpf}");
                 var restrictedPassangerJson = await response.Content.ReadAsStringAsync();
                 if (response.IsSuccessStatusCode)
                     return restricted = JsonSerializer.Deserialize<Restricted>(restrictedPassangerJson);
@@ -59,7 +69,7 @@ namespace APISale.Services
                     return null;
             }
         }
-        public Flight GetFlight(DateTime date) //acrecetar parametros (LOUISE) 
+        public async Task<Flight> GetFlight(DateTime date, string rab)
         {
             string datein = date.ToString();
             datein = datein.Trim();
@@ -68,34 +78,18 @@ namespace APISale.Services
             string dateMounth = datein.Substring(3, 2);
             string dateDay = datein.Substring(0, 2);
             string dateFinal = dateYear + "-" + dateMounth + "-" + dateDay;
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create($"https://localhost:44353/api/Flight/{dateFinal}"); //url do get flight por DATA!
-            request.AllowAutoRedirect = false;
-            HttpWebResponse verificaServidor = (HttpWebResponse)request.GetResponse();
-            Stream stream = verificaServidor.GetResponseStream();
-            if (stream == null) return null;
-            StreamReader answerReader = new StreamReader(stream);
-            string message = answerReader.ReadToEnd();
-            return new JavaScriptSerializer().Deserialize<Flight>(message);
+            var httpclient = new HttpClient();
+            var saleresponse = await httpclient.GetAsync($"https://localhost:44385/api/Flight/GetOneFlight/{dateFinal}/{rab}");
+            var JsonString = await saleresponse.Content.ReadAsStringAsync();
+            var sales = JsonSerializer.Deserialize<Flight>(JsonString);
+            return sales;
         }
-        //public async Task<Flight> GetFlight(DateTime date) //verificar voos 
-        //{
-        //    Flight flight;
-        //    using (HttpClient _flightClient = new HttpClient())
-        //    {
-        //        HttpResponseMessage response = await _flightClient.GetAsync("Linkd do get por data de flights");
-        //        var flightJson = await response.Content.ReadAsStringAsync();
-        //        if (response.IsSuccessStatusCode)
-        //            return flight = JsonSerializer.Deserialize<Flight>(flightJson);
-        //        else
-        //            return null;
-        //    }
-        //}
-        public async Task<Flight> PutFlight(DateTime departure, bool newStatus, Flight flightIn) //verificar voos 
+        public async Task<Flight> PutFlight(string id, int sale) //verificar voos
         {
             Flight flightReturn;
             using (HttpClient _flightClient = new HttpClient())
             {
-                HttpResponseMessage response = await _flightClient.GetAsync("Linkd do put de flights");
+                HttpResponseMessage response = await _flightClient.PutAsync($"https://localhost:44385/api/Flight/{id}/{sale}", null);
                 var flightJson = await response.Content.ReadAsStringAsync();
                 if (response.IsSuccessStatusCode)
                     return flightReturn = JsonSerializer.Deserialize<Flight>(flightJson);

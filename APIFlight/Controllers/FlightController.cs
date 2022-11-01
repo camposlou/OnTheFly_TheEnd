@@ -96,7 +96,7 @@ namespace APIFlight.Controllers
         #region Put Flight
         [HttpPut("flightcancel/{id}")]
         public ActionResult<Flight> UpdateCancel(string id)
-        {
+        {            
             var flight = _flightService.GetOne(id);
 
             if (flight == null || flight.Status == false)
@@ -112,20 +112,18 @@ namespace APIFlight.Controllers
         }
         #endregion
 
-        #region Put Flight Id
-        [HttpPut("{id}")]
-        public ActionResult<Flight> Update(string id, Flight flightIn)
+        #region Put Flight Id and Sale
+        [HttpPut("{id}/{sale}")] //metodo para atualizar as vendas!
+        public ActionResult<Flight> UpdateCapacity(string id, int sale)
         {
             var flight = _flightService.GetOne(id);
-
             if (flight == null || flight.Status == false)
             {
                 return NotFound();
             }
-
-            _flightService.Update(id, flightIn);
-
-            return CreatedAtRoute("GetFlight", new { id = flight.Id }, flightIn); 
+            flight.Sale = sale;
+            _flightService.Update(id, flight);
+            return CreatedAtRoute("GetFlight", new { id = flight.Id }, flight);
         }
         #endregion
 
