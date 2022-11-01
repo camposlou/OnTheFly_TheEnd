@@ -1,11 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading.Tasks;
 using APICompany.Utils;
 using Domain.Models;
 using MongoDB.Driver;
-using Newtonsoft.Json;
+
 
 namespace APICompany.Services
 {
@@ -35,7 +36,7 @@ namespace APICompany.Services
                 HttpResponseMessage response = await _aircraftClient.PostAsync("https://localhost:44321/api/Aircraft", content);
                 var aircraftJson = await response.Content.ReadAsStringAsync();
                 if (response.IsSuccessStatusCode)
-                    return aircraft = JsonConvert.DeserializeObject<Aircraft>(aircraftJson);
+                    return aircraft = JsonSerializer.Deserialize<Aircraft>(aircraftJson);
                 else
                     return null;
 

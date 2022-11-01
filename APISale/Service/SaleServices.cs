@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using MongoDB.Driver;
 using APISale.Utils;
 using System.Web.Script.Serialization;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace APISale.Services
 {
@@ -37,7 +37,7 @@ namespace APISale.Services
         }
         public Passenger GetPassenger(string cpf)
         {
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create("link do get por cpf" + cpf); //url
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create("https://localhost:44369/api/Passenger/CPF/" + cpf); //url
             request.AllowAutoRedirect = false;
             HttpWebResponse verificaServidor = (HttpWebResponse)request.GetResponse();
             Stream stream = verificaServidor.GetResponseStream();
@@ -54,7 +54,7 @@ namespace APISale.Services
                 HttpResponseMessage response = await _restrictedClient.GetAsync("link do get passenger restritos for cpf/" + cpf + "/json/");
                 var restrictedPassangerJson = await response.Content.ReadAsStringAsync();
                 if (response.IsSuccessStatusCode)
-                    return restricted = JsonConvert.DeserializeObject<Restricted>(restrictedPassangerJson);
+                    return restricted = JsonSerializer.Deserialize<Restricted>(restrictedPassangerJson);
                 else
                     return null;
             }
@@ -85,7 +85,7 @@ namespace APISale.Services
         //        HttpResponseMessage response = await _flightClient.GetAsync("Linkd do get por data de flights");
         //        var flightJson = await response.Content.ReadAsStringAsync();
         //        if (response.IsSuccessStatusCode)
-        //            return flight = JsonConvert.DeserializeObject<Flight>(flightJson);
+        //            return flight = JsonSerializer.Deserialize<Flight>(flightJson);
         //        else
         //            return null;
         //    }
@@ -98,7 +98,7 @@ namespace APISale.Services
                 HttpResponseMessage response = await _flightClient.GetAsync("Linkd do put de flights");
                 var flightJson = await response.Content.ReadAsStringAsync();
                 if (response.IsSuccessStatusCode)
-                    return flightReturn = JsonConvert.DeserializeObject<Flight>(flightJson);
+                    return flightReturn = JsonSerializer.Deserialize<Flight>(flightJson);
                 else
                     return null;
             }

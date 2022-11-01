@@ -6,11 +6,11 @@ using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
+
 
 namespace Domain.Models
 {
-    [JsonObject(MemberSerialization.OptIn)]
+    
     public class Airport
     {
         //[BsonId]
@@ -26,7 +26,7 @@ namespace Domain.Models
         public string name { get; set; }
         [JsonPropertyName("city_code")]
         public string city_code { get; set; }
-        [JsonPropertyName("country_ìd")]
+        [JsonPropertyName("country_id")]
         public string country_id { get; set; }
         [JsonPropertyName("location")]
         public string location { get; set; }

@@ -59,25 +59,28 @@ namespace APIAircraft.Controllers
         #endregion
 
         #region Create AirCraft - OK FALTA VALIDACAO PREFIXO
-        [HttpPost]
-        public ActionResult<Aircraft> CreateAircraft(Aircraft aircraft, string cnpj)
+        [HttpPost("{cnpj}")]
+        public ActionResult<Aircraft> CreateAircraft(AircraftDTO aircraftIn, string cnpj)
         {
-            var company = _aircraftService.GetApiCompany(cnpj);
-            if (company == null)
-                return NotFound("Companhia não cadastrada!");
+            //cnpj = aircraft.Company.Cnpj.Replace(".", "").Replace("-", "").Replace("/", "").Replace("%2F", "");
 
-            aircraft.RAB = aircraft.RAB.Trim().ToLower();
-            var rab = aircraft.RAB;
+            var company = _aircraftService.GetApiCompany(cnpj).Result;
+            if (company == null) return NotFound("Companhia não cadastrada!");
+
+            var rab = aircraftIn.RAB.Trim().ToLower();
+            //var rabValidation = rab.Substring(0, 2);
+            //if (rabValidation != "PT" && rabValidation != "PP" && rabValidation != "PR" && rabValidation != "PS")
+            //    return BadRequest("Prefixo da aeronave incorreto!\nTente Novamente!");
 
             if (rab.Length < 5)
                 return BadRequest("RAB inválido!\nTente novamente!");
-
+            Aircraft aircraft = new Aircraft();
             aircraft.RAB = rab.Substring(0, 2) + "-" + rab.Substring(2, 3);
             aircraft.DtRegistry = DateTime.Now;
             aircraft.DtLastFlight = DateTime.Now;
-
-            var capacity = aircraft.Capacity;
-            if (capacity == 0)
+            aircraft.Company = company;
+            aircraft.Capacity = aircraftIn.Capacity;            
+            if (aircraftIn.Capacity == 0)
                 return BadRequest("Aeronave precisa ter um número de assentos superior a 0.");
 
             var dtLastFlight = aircraft.DtLastFlight;
@@ -92,10 +95,9 @@ namespace APIAircraft.Controllers
             return CreatedAtRoute("GetAirCraft", new { rab = aircraft.RAB.ToString() }, aircraft);
         }
         #endregion
-
         #region AirCraft Update - OK
         [HttpPut("{rab:length(6)},{newCapacity}")]
-        public ActionResult<Aircraft> UpdateAircraft(string rab, Aircraft aircraftIn, int newCapacity, string cnpj)
+        public ActionResult<Aircraft> UpdateAircraft(string rab, Aircraft aircraftIn, int newCapacity, string cnpj, DateTime dtlastflight)
         {
             //Aircraft aircrafIn = new Aircraft()
             //{
@@ -124,6 +126,23 @@ namespace APIAircraft.Controllers
             aircraftIn.Capacity = newCapacity;
 
             _aircraftService.UpdateAircraft(rab, aircraftIn);
+
+            return NoContent();
+        }
+        #endregion
+
+        #region Update DateFlight
+        [HttpPut("{rab:length(6)},{dtFlight}")]
+        public ActionResult<Aircraft> UpdateDateFlight(string rab, DateTime dtFlight)
+        {
+
+            var aircraft = _aircraftService.GetByAircraft(rab);
+            if (aircraft == null)
+                return NotFound("Aeronave não encontrada!");
+
+            aircraft.DtLastFlight = dtFlight;
+
+            _aircraftService.UpdateAircraft(rab, aircraft);
 
             return NoContent();
         }

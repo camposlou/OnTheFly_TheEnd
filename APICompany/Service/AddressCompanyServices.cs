@@ -1,7 +1,8 @@
 ﻿using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Domain.Models;
-using Newtonsoft.Json;
+
 
 namespace APICompany.Services
 {
@@ -16,10 +17,22 @@ namespace APICompany.Services
                 HttpResponseMessage response = await _adressClient.GetAsync("https://viacep.com.br/ws/" + cep + "/json/");
                 var addressJson = await response.Content.ReadAsStringAsync();
                 if (response.IsSuccessStatusCode)
-                    return address = JsonConvert.DeserializeObject<Address>(addressJson);
+                {
+                    AddressDTOViaCep addressDTO = JsonSerializer.Deserialize<AddressDTOViaCep>(addressJson);
+                    address = new Address()
+                    {
+                        City = addressDTO.City,
+                        Complement = addressDTO.Complement,
+                        Number = addressDTO.Number,
+                        State = addressDTO.State,
+                        Street = addressDTO.Street,
+                        ZipCode = addressDTO.ZipCode
+                    };
+                    return address;
+                }
+
                 else
                     return null;
-
             }
         }
     }

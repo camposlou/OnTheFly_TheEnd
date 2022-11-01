@@ -42,7 +42,7 @@ namespace APIPassenger.Controllers
         {
             #region Inserção de endereço - OK
             var cep = passenger.Address.ZipCode;
-            var address = _addressServices.GetAdress(cep).Result;
+            Address address = _addressServices.GetAdress(cep).Result;
             if (address == null)
                 return NotFound("Endereço não encontrado");
             else

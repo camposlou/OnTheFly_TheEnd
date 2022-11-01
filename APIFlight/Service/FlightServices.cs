@@ -1,11 +1,10 @@
 ﻿using APIFlight.Utils;
 using Domain.Models;
 using MongoDB.Driver;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
-using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace APIFlight.Services
@@ -23,11 +22,10 @@ namespace APIFlight.Services
         }
         #endregion
 
-        #region POST Flight
-        
-        public  Flight Create(Flight flight)
+        #region POST Flight        
+        public async Task<Flight> CreateAsync(Flight flight)
         {
-            _flights.InsertOne(flight);
+            await _flights.InsertOneAsync(flight);
             return flight;
         }
         #endregion
@@ -36,57 +34,72 @@ namespace APIFlight.Services
         public  List<Flight> GetListFlight() =>  _flights.Find(flight => true).ToList();
         #endregion
 
+        #region Get One Flight Id
+        public Flight GetOne(string id) => _flights.Find(flight => flight.Id == id).FirstOrDefault();
+        #endregion
+
         #region Get One Flight Departure
-        public Flight GetOneFlight(DateTime departure) => _flights.Find    //Rever
-            (flight => flight.Departure == departure).FirstOrDefault();
+        public Flight GetOneFlight(DateTime departure, string rab)
+        {
+            var flightRABList = _flights.Find(flight => flight.Plane.RAB.ToUpper() == rab.ToUpper()).ToList();
+            foreach (var flight in flightRABList)
+            {
+                if (flight.Departure.ToString("dd/MM/yyyy") == departure.ToString("dd/MM/yyyy")) return flight;
+            }
+            return null;
+        }
+            
         #endregion
 
         #region Get API 
         public async Task<Aircraft> GetByAircraft(string rab)
-        {
-            Aircraft aircraft;
+        {            
+            var httpclient = new HttpClient();
+            var airportresponse = await httpclient.GetAsync("https://localhost:44321/api/Aircraft/" + rab);
+            var JsonString = await airportresponse.Content.ReadAsStringAsync();
+            //JavaScriptSerializer ser = new JavaScriptSerializer();
+            var aircraft = JsonSerializer.Deserialize<Aircraft>(JsonString);
 
-            using (HttpClient _aircraftClient = new HttpClient())
-            {
-                             
-                HttpResponseMessage response = await _aircraftClient.GetAsync("https://localhost:44321/api" + rab );
-                var aircraftJson = await response.Content.ReadAsStringAsync();
-                if (response.IsSuccessStatusCode)
-                    return aircraft = JsonConvert.DeserializeObject<Aircraft>(aircraftJson);
-                else
-                    return null;
-
-            }
+            return aircraft;
+            
         }
-
         public async Task<Airport> GetIata(string iata)
         {
-           Airport airport;
+            var httpclient = new HttpClient();
+            var airportresponse = await httpclient.GetAsync("https://localhost:44315/Airport/" + iata);
+            string JsonString = await airportresponse.Content.ReadAsStringAsync();
+            var airport = JsonSerializer.Deserialize<Airport>(JsonString);
+            return airport;
 
-            using (HttpClient _airportClient = new HttpClient())
-            {
-
-                HttpResponseMessage response = await _airportClient.GetAsync("http://localhost:11306/api" + iata);
-                var airportJson = await response.Content.ReadAsStringAsync();
-                if (response.IsSuccessStatusCode)
-                    return airport = JsonConvert.DeserializeObject<Airport>(airportJson);
-                else
-                    return null;
-
-            }
         }
+        //public async Task<Blocked> Get(string cnpj)
+        //{
+        //    cnpj = cnpj.Trim();
+        //    cnpj = cnpj.Replace("/", "%2F");
+        //    Blocked blocked;
 
-        public async Task<Blocked> Get(string cnpj)
+        //    using (HttpClient _blockedClient = new HttpClient())
+        //    {
+
+        //        HttpResponseMessage response = await _blockedClient.GetAsync("https://localhost:44314/api/Blocked/" + cnpj);
+        //        var blockedJson = await response.Content.ReadAsStringAsync();
+        //        if (response.IsSuccessStatusCode)
+        //            return blocked = JsonSerializer.Deserialize<Blocked>(blockedJson);
+        //        else
+        //            return null;
+
+        //    }
+        //}       
+        public async Task<Aircraft> UpdateAircraft(string rab, DateTime dtFlight)
         {
-            Blocked blocked;
-
-            using (HttpClient _blockedClient = new HttpClient())
+            Aircraft aircraft;
+            using (HttpClient _aircraftClient = new HttpClient())
             {
 
-                HttpResponseMessage response = await _blockedClient.GetAsync("http://localhost:10676/api" + cnpj);
-                var blockedJson = await response.Content.ReadAsStringAsync();
+                HttpResponseMessage response = await _aircraftClient.PutAsync($"https://localhost:44321/api/Aircraft/{rab},{dtFlight}", null);
+                var aircraftJson = await response.Content.ReadAsStringAsync();
                 if (response.IsSuccessStatusCode)
-                    return blocked = JsonConvert.DeserializeObject<Blocked>(blockedJson);
+                    return aircraft = JsonSerializer.Deserialize<Aircraft>(aircraftJson);
                 else
                     return null;
 
@@ -94,14 +107,17 @@ namespace APIFlight.Services
         }
         #endregion
 
-        #region PUT Flight
-        public void Update(DateTime departure, Flight flightIn)
-        {
-           _flights.ReplaceOne(flight => flight.Departure == departure, flightIn);
-        }
-        #endregion
-
+        #region PUT Flight Id
+        public void Update(string id, Flight flightIn) =>
         
+           _flights.ReplaceOne(flight => flight.Id == id, flightIn);        
+        #endregion
+
+        #region Put Flight Cancel
+        public void UpdateCancel (string id, Flight flightIn) => 
+            _flights.ReplaceOne(flight => flight.Id == id, flightIn);
+        #endregion
+
 
     }
 }

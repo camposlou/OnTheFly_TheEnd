@@ -1,11 +1,10 @@
 ﻿using APIAircraft.Utils;
 using Domain.Models;
 using MongoDB.Driver;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
-using System.Reflection;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace APIAircraft.Services
@@ -52,26 +51,22 @@ namespace APIAircraft.Services
 
         #region Get API Company consumindo api
         public async Task<Company> GetApiCompany(string cnpj)
-        {
-            cnpj = FormatCnpj(cnpj);
+        {            
 
             Company company;
             using (HttpClient _companyClient = new HttpClient())
             {
-                HttpResponseMessage response = await _companyClient.GetAsync("https://localhost:44321/api/Company" + cnpj); // Adicionar o caminho
+                HttpResponseMessage response = await _companyClient.GetAsync("https://localhost:44314/api/Company/" + cnpj); // Adicionar o caminho
                 var companyJson = await response.Content.ReadAsStringAsync();
                 if (response.IsSuccessStatusCode)
-                    return company = JsonConvert.DeserializeObject<Company>(companyJson);
+                    return company = JsonSerializer.Deserialize<Company>(companyJson);
                 else
                     return null;
             }
         }
         #endregion
 
-        public static string FormatCnpj(string cnpj)
-        {
-            return Convert.ToUInt64(cnpj).ToString(@"00\.000\.000\/0000\-00");
-        }
+        
 
     }
 }
